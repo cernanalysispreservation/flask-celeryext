@@ -14,6 +14,7 @@ from __future__ import absolute_import, print_function
 import warnings
 from distutils.version import LooseVersion
 
+import flask
 from celery import Task
 from celery import __version__ as celery_version
 from celery import current_app as current_celery_app
@@ -75,6 +76,10 @@ class AppContextTask(Task):
 
     def __call__(self, *args, **kwargs):
         """Execute task."""
+        if flask._app_ctx_stack.top is not None:
+            # it means an app_context is already loaded
+            # Just pass through.
+            return Task.__call__(self, *args, **kwargs)
         with self.app.flask_app.app_context():
             return Task.__call__(self, *args, **kwargs)
 
